@@ -1,4 +1,4 @@
-from .config import config
+from config import config
 from sentinelhub import SentinelHubCatalog, DataCollection #pip install sentinelhub
 from itertools import islice
 

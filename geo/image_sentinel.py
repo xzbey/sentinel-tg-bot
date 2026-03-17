@@ -1,4 +1,4 @@
-from .config import config
+from config import config
 from sentinelhub import SentinelHubRequest, DataCollection, MimeType, BBox, CRS, bbox_to_dimensions
 from PIL import ImageEnhance, Image
 

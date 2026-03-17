@@ -1,3 +1,10 @@
+from config import token
+
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler # pip install python-telegram-bot
+
+from handlers import start, ask_radius, get_radius, ask_date, get_date, do_search, RADIUS, DATE
+
+'''
 from geo_search import search
 
 def print_data(results):
@@ -12,5 +19,40 @@ def print_data(results):
         print(f"Ошибка: {results['error']}")
 
 
-#print_data(search("алешинские сады"))
-print_data(search("авиаторов 5", time_interval=("2025-06-01", "2025-08-31")))
+
+#print_data(search("42"))
+# работает просто ввод текста
+
+#print_data(search("55.699426, 38.357748", delta=0.05, 
+#                  time_interval=("2025-6-1", "2025-8-31")))
+# работает поиск по кордам + доп условия
+
+#print_data(search("алешинские сады", 
+#                  time_interval=("2025-06-01", "2025-08-31")))
+
+print_data(search("алешинские сады", 10, ("2025-06-01", "2025-08-31")))
+
+'''
+
+application = (
+    ApplicationBuilder()
+    .token(token)
+    .read_timeout(120)
+    .write_timeout(120)
+    .connect_timeout(30)
+    .build()
+)
+
+conv_handler = ConversationHandler(
+    entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND, ask_radius)],
+    states={
+        RADIUS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius)],
+        DATE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
+    },
+    fallbacks=[CommandHandler("start", start)],
+)
+
+application.add_handler(CommandHandler("start", start))
+application.add_handler(conv_handler)
+
+application.run_polling()
