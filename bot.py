@@ -2,7 +2,7 @@ from config import token
 
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler # pip install python-telegram-bot
 
-from handlers import start, ask_radius, get_radius, ask_date, get_date, do_search, RADIUS, DATE
+from handlers import start, guide, ask_radius, get_radius, ask_date, get_date, do_search, RADIUS, DATE
 
 '''
 from geo_search import search
@@ -53,6 +53,7 @@ conv_handler = ConversationHandler(
 )
 
 application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("guide", guide))
 application.add_handler(conv_handler)
 
 application.run_polling()
