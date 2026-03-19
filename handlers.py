@@ -18,6 +18,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     parse_mode=ParseMode.HTML)
 
 async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data.clear()
+
     await update.message.reply_text(text=
     "🌍 Это бот для поиска <b>Sentinel2 L2A</b> снимков.\n\n" \
     
@@ -54,6 +56,14 @@ async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     return RADIUS
 
+async def ask_radius_fail(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [["📍 5 км - по умолчанию", "❌ Отмена"]]
+    await update.message.reply_text(
+        "Введите радиус поиска в км (0.1 - 50)",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
+    return RADIUS
+
 async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
@@ -69,13 +79,12 @@ async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             rad = float(text)
             if rad < 0.1 or rad > 50:
-                await update.message.reply_text("Введите радиус поиска:")
-                return RADIUS
+                ask_radius_fail(update, context)
             context.user_data["radius"] = rad / 100
 
         except (ValueError, TypeError):
-            await update.message.reply_text("Введите радиус поиска:")
-            return RADIUS
+            ask_radius_fail(update, context)
+            
 
     return await ask_date(update, context)
 
