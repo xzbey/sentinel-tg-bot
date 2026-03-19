@@ -49,11 +49,13 @@ conv_handler = ConversationHandler(
         RADIUS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius)],
         DATE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
     },
-    fallbacks=[CommandHandler("start", start)],
+    fallbacks=[
+        CommandHandler("start", start),
+        CommandHandler("guide", guide),
+        ],
 )
 
 application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("guide", guide))
 application.add_handler(conv_handler)
 
 application.run_polling()
