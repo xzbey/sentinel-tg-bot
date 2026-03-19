@@ -16,10 +16,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     "🌍 Это бот для поиска <b>Sentinel2 L2A</b> снимков по локации (адрес или координата точки), радиусу удаления от точки и интервалу времени.\n\n" \
     "📄 Чтобы ознакомиться с инструкцией, введите <code>/guide</code>.",
     parse_mode=ParseMode.HTML)
+    return END
 
 async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.user_data.clear()
-
     await update.message.reply_text(text=
     "🌍 Это бот для поиска <b>Sentinel2 L2A</b> снимков.\n\n" \
     
@@ -39,16 +38,26 @@ async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
     "   ⚠️ Не раньше <code>2017-01-01</code> и не позже сегодняшней даты.\n\n" \
     
     "<u>На любом шаге можно нажать кнопку <b>Отмена</b>, которая вернет всё в исходное состояние.</u>\n" \
-    "После данных действий бот будет искать снимок по заданным критериям и информировать вас о процессе.\n\n" \
-    
-    "<i>Введите локацию для поиска:</i>",
+    "После данных действий бот будет искать снимок по заданным критериям и информировать вас о процессе.\n\n",
     parse_mode=ParseMode.HTML, 
     reply_markup=ReplyKeyboardRemove())
 
-    return END
+    state = context.user_data.get('state', END)
+
+    if state == RADIUS:
+        return await ask_radius_fail(update, context)
+    
+    elif state == DATE:
+        return await ask_date(update, context)
+    
+    else:
+        await update.message.reply_text("Введите локацию для поиска:")
+        return END
 
 async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['location'] = update.message.text
+    context.user_data['state'] = RADIUS
+
     keyboard = [["📍 5 км - по умолчанию", "❌ Отмена"]]
     await update.message.reply_text(
         "Введите радиус поиска в км (0.1 - 50)",
@@ -79,17 +88,19 @@ async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             rad = float(text)
             if rad < 0.1 or rad > 50:
-                ask_radius_fail(update, context)
+                return await ask_radius_fail(update, context)
             context.user_data["radius"] = rad / 100
 
         except (ValueError, TypeError):
-            ask_radius_fail(update, context)
+            return await ask_radius_fail(update, context)
             
 
     return await ask_date(update, context)
 
 
 async def ask_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.user_data['state'] = DATE
+
     keyboard = [["📅 2023-01-01 - сегодня", "❌ Отмена"]]
     await update.message.reply_text(
         "Введите интервал времени:",

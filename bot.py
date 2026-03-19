@@ -46,16 +46,12 @@ application = (
 conv_handler = ConversationHandler(
     entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND, ask_radius)],
     states={
-        RADIUS: [
-            CommandHandler("guide", guide),
-            MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius)],
-        DATE:   [
-            CommandHandler("guide", guide),
-            MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
+        RADIUS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius)],
+        DATE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
     },
     fallbacks=[
         CommandHandler("start", start),
-        ],
+    ],
 )
 
 application.add_handler(CommandHandler("start", start))
