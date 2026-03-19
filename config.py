@@ -1,9 +1,10 @@
 from sentinelhub import SHConfig #pip install sentinelhub
+import os
 
 # sentinelhub
 config = SHConfig()
-config.sh_client_id = "40ccb650-78c1-4278-917e-b74427156c0f"
-config.sh_client_secret = "D2rlkxH1gb0ymcf3JCkg9xVPF1nLxBr1"
+config.sh_client_id = os.getenv("SH_CLIENT_ID")
+config.sh_client_secret = os.getenv("SH_CLIENT_SECRET")
 
 #tg
-token = "8688290135:AAED9p0KtxIVuqIMMqTlwD4-pUZc0eaEwtI"
+token = os.getenv("BOT_TOKEN")
