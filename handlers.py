@@ -8,6 +8,9 @@ from geo_search import search
 
 from datetime import datetime, date
 
+RADIUS, DATE = range(2)
+END = ConversationHandler.END
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text=
     "🌍 Это бот для поиска <b>Sentinel2 L2A</b> снимков по локации (адрес или координата точки), радиусу удаления от точки и интервалу времени.\n\n" \
@@ -41,9 +44,6 @@ async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup=ReplyKeyboardRemove())
 
     return END
-
-RADIUS, DATE = range(2)
-END = ConversationHandler.END
 
 async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['location'] = update.message.text
