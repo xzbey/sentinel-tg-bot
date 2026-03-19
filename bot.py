@@ -56,6 +56,7 @@ conv_handler = ConversationHandler(
 )
 
 application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("guide", guide))
 application.add_handler(conv_handler)
 
 application.run_polling()
