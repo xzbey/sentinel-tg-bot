@@ -77,6 +77,7 @@ async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
     if text == "❌ Отмена":
+        context.user_data['state'] = END
         await update.message.reply_text("Отменено.", reply_markup=ReplyKeyboardRemove())
         await update.message.reply_text("Введите локацию для поиска:")
         return END
@@ -112,6 +113,7 @@ async def get_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
     if text == "❌ Отмена":
+        context.user_data['state'] = END
         await update.message.reply_text("Отменено.", reply_markup=ReplyKeyboardRemove())
         await update.message.reply_text("Введите локацию для поиска:")
         return END
@@ -182,6 +184,7 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🛑 <b>Ошибка:</b> <i>{search_result['error']}</i>",
             parse_mode=ParseMode.HTML)
     
+    context.user_data['state'] = END
     await update.message.reply_text("Введите локацию для поиска:")
     return END
 
