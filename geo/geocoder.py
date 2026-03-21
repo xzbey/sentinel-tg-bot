@@ -30,3 +30,5 @@ def loc_to_coords(location, delta = 0.05):
     except Exception as e:
         return {"success": False,
                 "error": e}
+    
+# github.com/xzbey | tg/xzbey

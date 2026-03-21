@@ -8,3 +8,5 @@ config.sh_client_secret = os.getenv("SH_CLIENT_SECRET")
 
 #tg
 token = os.getenv("BOT_TOKEN")
+
+# github.com/xzbey | tg/xzbey

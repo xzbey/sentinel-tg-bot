@@ -59,3 +59,5 @@ application.add_handler(CommandHandler("guide", guide))
 application.add_handler(conv_handler)
 
 application.run_polling()
+
+# github.com/xzbey | tg/xzbey

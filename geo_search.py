@@ -2,6 +2,8 @@ from geo import loc_to_coords, search_sentinel, get_sentinel_image
 from sentinelhub import BBox, CRS
 from datetime import datetime
 
+# github.com/xzbey | tg/xzbey
+
 def search(location, delta=0.1, time_interval=("2023-01-01", datetime.now().strftime("%Y-%m-%d"))):
     # --------------------------- geocoder.py
     geocoder_data = loc_to_coords(location, delta=delta)

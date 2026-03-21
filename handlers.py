@@ -186,4 +186,4 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return END
 
 
-
+# github.com/xzbey | tg/xzbey
