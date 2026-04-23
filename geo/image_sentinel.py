@@ -1,4 +1,4 @@
-from config import config
+from config import sentinel_config
 from sentinelhub import SentinelHubRequest, DataCollection, MimeType, BBox, CRS, bbox_to_dimensions
 from PIL import ImageEnhance, Image
 
@@ -45,7 +45,7 @@ def get_sentinel_image(datetime, bbox):
         responses=[SentinelHubRequest.output_response("default", MimeType.PNG)],
         bbox=bbox,
         size=size,
-        config=config,
+        config=sentinel_config(),
     )
 
     true_color_imgs = request_true_color.get_data()

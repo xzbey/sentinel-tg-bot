@@ -1,8 +1,12 @@
-from config import token
-
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler # pip install python-telegram-bot
 
 from handlers import start, guide, ask_radius, get_radius, ask_date, get_date, do_search, RADIUS, DATE
+
+from dotenv import load_dotenv # pip install python-dotenv
+load_dotenv()
+
+from config import token
+import os
 
 '''
 from geo_search import search
@@ -36,7 +40,7 @@ print_data(search("алешинские сады", 10, ("2025-06-01", "2025-08-3
 
 application = (
     ApplicationBuilder()
-    .token(token)
+    .token(token())
     .read_timeout(120)
     .write_timeout(120)
     .connect_timeout(30)

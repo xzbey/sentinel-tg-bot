@@ -1,10 +1,10 @@
-from config import config
+from config import sentinel_config
 from sentinelhub import SentinelHubCatalog, DataCollection #pip install sentinelhub
 from itertools import islice
 
 def search_sentinel(coords, bbox, time_interval):
 
-    catalog = SentinelHubCatalog(config=config)
+    catalog = SentinelHubCatalog(config=sentinel_config())
 
     search_catalog = list(islice(catalog.search(
         DataCollection.SENTINEL2_L2A,
