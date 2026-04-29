@@ -19,7 +19,7 @@ def search(location, delta=0.1, time_interval=("2023-01-01", datetime.now().strf
     bbox = BBox(bbox=coords, crs=CRS.WGS84)
 
     # --------------------------- search_sentinel.py
-    search_sentinel_data = search_sentinel(coords, bbox, time_interval=time_interval)
+    search_sentinel_data = search_sentinel(bbox, time_interval=time_interval)
 
     if search_sentinel_data["success"]:
         metadata = search_sentinel_data["data"]

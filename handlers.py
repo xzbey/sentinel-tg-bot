@@ -13,7 +13,7 @@ END = ConversationHandler.END
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text=
-    "🌍 Это бот для поиска <b>Sentinel2 L2A</b> снимков по локации (адрес или координата точки), радиусу удаления от точки и интервалу времени.\n\n" \
+    "🌍 Это бот для поиска <b>Sentinel2 L2A</b> снимков по локации (адрес или координаты точки), радиусу удаления от точки и интервалу времени.\n\n" \
     "📄 Чтобы ознакомиться с инструкцией, введите <code>/guide</code>.",
     parse_mode=ParseMode.HTML)
     return END
@@ -39,7 +39,9 @@ async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     "<u>На любом шаге можно нажать кнопку <b>Отмена</b>, которая вернет всё в исходное состояние.</u>\n" \
     "После данных действий бот будет искать снимок по заданным критериям и информировать вас о процессе.\n\n" \
-    "<b><u>При возникновении каких-либо непредвиденных проблем, пропишите <code>/start</code></u></b>",
+    "❗️ Для получения снимка на портале <a href='https://browser.dataspace.copernicus.eu/'>Copernicus Browser</a> перейдите по ссылке и зайдите на вкладку <b>Search</b>, "
+    "далее введите <b>Id</b> в поле <b>Search Criteria</b> и нажмите на кнопку <b>Search</b>.\n\n" \
+    "<b><u>При возникновении каких-либо непредвиденных проблем с ботом, пропишите <code>/start</code></u></b>",
     parse_mode=ParseMode.HTML, 
     reply_markup=ReplyKeyboardRemove())
 
