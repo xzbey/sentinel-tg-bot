@@ -2,7 +2,7 @@ from config import sentinel_config
 from sentinelhub import SentinelHubCatalog, DataCollection #pip install sentinelhub
 from itertools import islice
 
-def search_sentinel(coords, bbox, time_interval):
+def search_sentinel(bbox, time_interval):
 
     catalog = SentinelHubCatalog(config=sentinel_config())
 
