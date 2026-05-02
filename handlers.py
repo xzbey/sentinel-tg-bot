@@ -41,7 +41,7 @@ async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
     "После данных действий бот будет искать снимок по заданным критериям и информировать вас о процессе.\n\n" \
     "❗️ Для получения снимка на портале <a href='https://browser.dataspace.copernicus.eu/'>Copernicus Browser</a> перейдите по ссылке и зайдите на вкладку <b>Search</b>, "
     "далее введите <b>Id</b> в поле <b>Search Criteria</b> и нажмите на кнопку <b>Search</b>.\n\n" \
-    "<b><u>При возникновении каких-либо непредвиденных проблем с ботом, пропишите <code>/start</code></u></b>",
+    "<b><u>При возникновении каких-либо непредвиденных проблем с ботом, пропишите <code>/guide</code> и нажмите кнопку <b>Отмена</b></u></b>",
     parse_mode=ParseMode.HTML, 
     reply_markup=ReplyKeyboardRemove())
 
