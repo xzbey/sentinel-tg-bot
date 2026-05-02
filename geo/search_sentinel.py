@@ -27,7 +27,7 @@ def search_sentinel(bbox, time_interval):
 
     if not search_catalog:
         return {"success": False, 
-                "error": "Нет данных за период " + time_interval}
+                "error": f"Нет данных за период {time_interval[0]} - {time_interval[1]}"}
 
     result = min(search_catalog, key=lambda x: x["properties"]["eo:cloud_cover"])
     return {"success": True, 

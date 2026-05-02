@@ -6,7 +6,7 @@ def sentinel_config():
     config = SHConfig()
     config.sh_client_id = os.getenv("SH_CLIENT_ID")
     config.sh_client_secret = os.getenv("SH_CLIENT_SECRET")
-    config.sh_timeout = 30
+    config.sh_timeout = 60
     return config
 
 #tg
