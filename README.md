@@ -112,7 +112,7 @@ systemctl restart sentinel2bot
 
 ## Ссылки
 
-- [GitHub репозиторий](https://github.com/xzbye/sentinel-tg-bot)
+- [GitHub репозиторий](https://github.com/xzbey/sentinel-tg-bot)
 - [Бот в Telegram](https://t.me/sentinel2_geo_bot)
 - [Документация Sentinel Hub](https://sentinelhub-py.readthedocs.io/)
 
