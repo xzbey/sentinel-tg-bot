@@ -38,7 +38,7 @@ def get_sentinel_image(datetime, bbox):
         evalscript=evalscript_true_color,
         input_data=[
             SentinelHubRequest.input_data(
-                data_collection=DataCollection.SENTINEL2_L2A,
+                data_collection=DataCollection.SENTINEL2_L2A.define_from("s2l2a_cdse", service_url=sentinel_config().sh_base_url),
                 time_interval=(datetime, datetime),
             )
         ],
