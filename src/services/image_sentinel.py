@@ -1,6 +1,9 @@
-from config import sentinel_config
+from core.config import sentinel_config
 from sentinelhub import SentinelHubRequest, DataCollection, MimeType, BBox, CRS, bbox_to_dimensions
 from PIL import ImageEnhance, Image
+
+from core.error import SearchError
+from services.evalscripts import get_evalscript
 
 def get_sentinel_image(datetime, bbox):
     b = False
@@ -10,29 +13,9 @@ def get_sentinel_image(datetime, bbox):
             b = True
             break
     if not b:
-        return {"success": False, 
-                "error": "Слишком большой размер изображения"}
-
-    #print(f"Image shape at {resolution} m resolution: {size} pixels")
+        raise SearchError("Слишком большой размер изображения")
     
-    evalscript_true_color = """
-        //VERSION=3
-
-        function setup() {
-            return {
-                input: [{
-                    bands: ["B02", "B03", "B04"]
-                }],
-                output: {
-                    bands: 3
-                }
-            };
-        }
-
-        function evaluatePixel(sample) {
-            return [sample.B04, sample.B03, sample.B02];
-        }
-    """
+    evalscript_true_color = get_evalscript(["B04", "B03", "B02"])
 
     request_true_color = SentinelHubRequest(
         evalscript=evalscript_true_color,
@@ -54,4 +37,6 @@ def get_sentinel_image(datetime, bbox):
     enhanced = ImageEnhance.Brightness(img).enhance(3)
     #enhanced.show()
 
-    return {"success": True, "data": enhanced, "resolution": resolution, "size": size}
+    return {"image": enhanced, 
+            "resolution": resolution, 
+            "size": size}
