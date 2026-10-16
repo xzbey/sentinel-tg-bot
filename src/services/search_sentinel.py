@@ -1,3 +1,5 @@
+from shapely import Geometry
+
 from core.config import sentinel_config
 from sentinelhub import SentinelHubCatalog, DataCollection
 from sentinelhub.exceptions import DownloadFailedException
@@ -5,14 +7,13 @@ from itertools import islice
 
 from core.error import SearchError, sentinelhub_error
 
-def search_sentinel(bbox, time_interval):
-
+def search_sentinel(geometry: Geometry, time_interval: tuple[str, str]):
     catalog = SentinelHubCatalog(config=sentinel_config())
 
     try:
         search_catalog = list(islice(catalog.search(
             DataCollection.SENTINEL2_L2A,
-            bbox=bbox,
+            geometry=geometry,
             time=time_interval,
             fields={"include": ["id", "properties.datetime", "properties.eo:cloud_cover"], "exclude": []},
         ), 200))

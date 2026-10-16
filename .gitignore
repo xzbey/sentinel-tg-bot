@@ -3,3 +3,5 @@ __pycache__
 *.pyc
 *.bak
 .env
+*.geojson
+*.qmd

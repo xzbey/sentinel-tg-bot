@@ -1,13 +1,15 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
 from telegram.constants import ParseMode
+from telegram.error import TelegramError
 
-import io
 import html
 import logging
+import asyncio
 
+from analysis.parse import parse_file
 from pipeline.pipeline import search
-from core.error import SearchError
+from core.error import SearchError, ParseError
 
 from datetime import datetime, date
 
@@ -16,8 +18,9 @@ logger = logging.getLogger(__name__)
 RADIUS, DATE = range(2)
 END = ConversationHandler.END
 
-async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE, reply_radius: bool = False):
-    if not reply_radius:
+async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE, repeat: bool = False):
+    if not repeat:
+        context.user_data.clear()
         context.user_data['location'] = update.message.text
         context.user_data['state'] = RADIUS
 
@@ -27,6 +30,38 @@ async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE, reply_r
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
     return RADIUS
+
+
+async def get_file_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    doc = update.message.document
+
+    if not doc.file_name or not doc.file_name.lower().endswith(".geojson"):
+        await update.message.reply_text("Принимаются только файлы GeoJSON!")
+        return END
+
+    if doc.file_size and doc.file_size > (20 * 1024 * 1024):
+        await update.message.reply_text("Файл слишком большой, лимит 20 МБ.")
+        return END
+
+    try:
+        tg_file = await doc.get_file()
+        data = parse_file(await tg_file.download_as_bytearray())
+
+        context.user_data.clear()
+        context.user_data["state"] = data["state"]
+        context.user_data["geometry"] = data["geometry"]
+
+    except TelegramError:
+        await update.message.reply_text("Не удалось скачать файл, попробуйте еще раз")
+        return END
+    except ParseError as e:
+        await update.message.reply_text(str(e))
+        return END
+
+    if data["state"] == RADIUS:
+        return await ask_radius(update, context, repeat=True)
+    else:
+        return await ask_date(update, context)
 
 
 async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -45,11 +80,11 @@ async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             rad = float(text)
             if rad < 0.1 or rad > 50:
-                return await ask_radius(update, context, reply_radius=True)
+                return await ask_radius(update, context, repeat=True)
             context.user_data["radius"] = rad / 100
 
         except (ValueError, TypeError):
-            return await ask_radius(update, context, reply_radius=True)
+            return await ask_radius(update, context, repeat=True)
             
 
     return await ask_date(update, context)
@@ -106,16 +141,20 @@ async def get_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    location = context.user_data["location"]
-    radius = context.user_data["radius"]
-    date = context.user_data["date"]
-
+    location = context.user_data.get("location")
+    geometry = context.user_data.get("geometry")
+    radius = context.user_data.get("radius")
+    date = context.user_data.get("date")
     
     searching_msg = await update.message.reply_text(text="Ищу снимок", reply_markup=ReplyKeyboardRemove())
     error_text = None
 
     try:
-        result = search(location, delta=radius, time_interval=date)
+        result = await asyncio.to_thread(search, 
+                                         location = location, 
+                                         geometry = geometry,
+                                         delta = radius, 
+                                         time_interval = date)
     except SearchError as e:
         error_text = str(e)
     except Exception as e:
@@ -128,14 +167,9 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_text is None:
         send_img_msg = await update.message.reply_text(text="Отправляю снимок...", reply_markup=ReplyKeyboardRemove())
 
-        buf = io.BytesIO()
-        result['image'].save(buf, format="PNG")
-        buf.seek(0)
-
-        await update.message.reply_document(buf, 
-                filename=f"{result['metadata']['id']}.png",
+        photo_msg = await update.message.reply_photo(result["preview"], 
                 caption=(
-                    f"<b>Адрес:</b> {result['address']}\n\n"
+                    f"<b>Адрес:</b> {html.escape(result['address'])}\n\n"
                     f"<b>Охват:</b> {result['coords']}\n\n"
                     f"<b>Id снимка:</b> {result['metadata']['id']}\n"
                     f"<b>Дата снимка:</b> {result['metadata']['datetime']}\n"
@@ -143,6 +177,15 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     f"<b>Разрешение:</b> {result['resolution']} м\n"
                     f"<b>Размер:</b> {result['size']} пикселей"),
                 parse_mode=ParseMode.HTML)
+
+        len_tiff = len(result["tiff"]) / (1024 * 1024)
+        if len_tiff > 50:
+            await photo_msg.reply_text(f"Документ слишком большой, размер: {len_tiff} МБ\n"
+                                       f"Уменьшите радиус!")
+        else:
+            await photo_msg.reply_document(result["tiff"],
+                                        filename=f"{result['metadata']['id']}.tiff",
+                                        do_quote=True)
 
         await send_img_msg.delete()
     else:

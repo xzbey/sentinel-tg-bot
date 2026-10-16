@@ -1,14 +1,12 @@
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler
-
-from tg.commands import start, guide
-from tg.handlers import ask_radius, get_radius, get_date, RADIUS, DATE
-
 from dotenv import load_dotenv
 load_dotenv()
 
-from core.config import token
-import os
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler
 
+from tg.commands import start, guide
+from tg.handlers import ask_radius, get_radius, get_date, get_file_data, RADIUS, DATE
+
+from core.config import token
 
 application = (
     ApplicationBuilder()
@@ -20,7 +18,8 @@ application = (
 )
 
 conv_handler = ConversationHandler(
-    entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND, ask_radius)],
+    entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND, ask_radius),
+                  MessageHandler(filters.Document.ALL, get_file_data)],
     states={
         RADIUS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius)],
         DATE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],

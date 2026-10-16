@@ -1,6 +1,9 @@
 class SearchError(Exception):
     ...
 
+class ParseError(Exception):
+    ...
+
 
 def sentinelhub_error(e: Exception) -> SearchError:
     err = str(e)
@@ -13,4 +16,4 @@ def sentinelhub_error(e: Exception) -> SearchError:
             return SearchError("Тестовый период Sentinel Hub истёк (403).")
         return SearchError("Доступ запрещён Sentinel Hub (403). Возможно, закончились токены.")
     
-    return SearchError("Ошибка Sentinel Hub: {e}")
+    return SearchError(f"Ошибка Sentinel Hub: {e}")

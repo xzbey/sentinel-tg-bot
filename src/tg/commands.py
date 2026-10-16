@@ -18,7 +18,7 @@ async def guide(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = context.user_data.get('state', END)
 
     if state == RADIUS:
-        await ask_radius(update, context, reply_radius=True)
+        await ask_radius(update, context, repeat=True)
     
     elif state == DATE:
         await ask_date(update, context)
