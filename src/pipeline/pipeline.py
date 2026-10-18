@@ -1,8 +1,10 @@
 from shapely import box
 
 from services.geocoder import coords_to_bbox, loc_to_coords
-from services.image_sentinel import get_sentinel_image
+from services.image_sentinel import bbox_size, get_sentinel_image, scl_mask
 from services.search_sentinel import search_sentinel
+
+from analysis.cloud_cover import cloud_percent
 
 from core.error import SearchError
 
@@ -36,7 +38,20 @@ def search(location: str = None,
     else:
         raise SearchError("Не задана локация для поиска")
         
-    metadata = search_sentinel(sh_geometry, time_interval)
+    metadata_list = search_sentinel(sh_geometry, time_interval)
+
+    size = bbox_size(sh_geometry, resolutions=[60])[0]
+    candidates = []
+    for metadata in metadata_list:
+        percent = cloud_percent(*scl_mask(datetime=metadata["datetime"], geometry=sh_geometry, size=size))
+        if percent is not None:
+            candidates.append((percent, metadata))
+
+    if candidates == []:
+        raise SearchError("В зоне нет пикселей с данными ни в одном из снимков")
+
+    percent, metadata = min(candidates, key=lambda x: x[0])
+    metadata["cloud_cover"] = round(percent, 2)
 
     image_data = get_sentinel_image(metadata["datetime"], sh_geometry)
 

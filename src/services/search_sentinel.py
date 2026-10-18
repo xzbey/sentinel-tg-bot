@@ -24,7 +24,6 @@ def search_sentinel(geometry: Geometry, time_interval: tuple[str, str]):
     if not search_catalog:
         raise SearchError(f"Нет данных за период {time_interval[0]} - {time_interval[1]}")
 
-    result = min(search_catalog, key=lambda x: x["properties"]["eo:cloud_cover"])
-    return {"id": result["id"], 
-            "datetime": result["properties"]["datetime"][:10], 
-            "cloud_cover": result["properties"]["eo:cloud_cover"]}
+    result = sorted(search_catalog, key=lambda x: x["properties"]["eo:cloud_cover"])[:5]
+    return [{"id": r["id"], 
+             "datetime": r["properties"]["datetime"][:10]} for r in result]

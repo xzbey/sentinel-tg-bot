@@ -181,7 +181,7 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         f"<b>Охват:</b> {result['coords']}\n\n"
                         f"<b>Id снимка:</b> {result['metadata']['id']}\n"
                         f"<b>Дата снимка:</b> {result['metadata']['datetime']}\n"
-                        f"<b>Облачность:</b> {result['metadata']['cloud_cover']}%\n\n"
+                        f"<b>Облачность:</b> {result['metadata']['cloud_cover']}% по SCL: 8, 9, 10\n\n"
                         f"<b>Разрешение:</b> {result['resolution']} м\n"
                         f"<b>Размер:</b> {result['size']} пикселей"),
                     parse_mode=ParseMode.HTML)
