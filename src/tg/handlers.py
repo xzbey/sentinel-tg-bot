@@ -37,19 +37,26 @@ async def get_file_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not doc.file_name or not doc.file_name.lower().endswith(".geojson"):
         await update.message.reply_text("Принимаются только файлы GeoJSON!")
-        return END
+        return
 
     if doc.file_size and doc.file_size > (20 * 1024 * 1024):
         await update.message.reply_text("Файл слишком большой, лимит 20 МБ.")
-        return END
+        return
 
     try:
         tg_file = await doc.get_file()
-        data = parse_file(await tg_file.download_as_bytearray())
+        data = await asyncio.to_thread(parse_file, await tg_file.download_as_bytearray())
 
         context.user_data.clear()
-        context.user_data["state"] = data["state"]
-        context.user_data["geometry"] = data["geometry"]
+        match data["state"]:
+            case "point":
+                context.user_data["state"] = RADIUS
+                context.user_data["geometry"] = data["geometry"]
+                return await ask_radius(update, context, repeat=True)
+            case "polygon":
+                context.user_data["state"] = DATE
+                context.user_data["geometry"] = data["geometry"]
+                return await ask_date(update, context)
 
     except TelegramError:
         await update.message.reply_text("Не удалось скачать файл, попробуйте еще раз")
@@ -57,11 +64,11 @@ async def get_file_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except ParseError as e:
         await update.message.reply_text(str(e))
         return END
-
-    if data["state"] == RADIUS:
-        return await ask_radius(update, context, repeat=True)
-    else:
-        return await ask_date(update, context)
+    except Exception as e:
+        error_text = f"Неожиданная ошибка при поиске снимка: {str(e)}"
+        logger.exception(error_text)
+        await update.message.reply_text(error_text)
+        return END
 
 
 async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -167,25 +174,29 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if error_text is None:
         send_img_msg = await update.message.reply_text(text="Отправляю снимок...", reply_markup=ReplyKeyboardRemove())
 
-        photo_msg = await update.message.reply_photo(result["preview"], 
-                caption=(
-                    f"<b>Адрес:</b> {html.escape(result['address'])}\n\n"
-                    f"<b>Охват:</b> {result['coords']}\n\n"
-                    f"<b>Id снимка:</b> {result['metadata']['id']}\n"
-                    f"<b>Дата снимка:</b> {result['metadata']['datetime']}\n"
-                    f"<b>Облачность:</b> {result['metadata']['cloud_cover']}%\n\n"
-                    f"<b>Разрешение:</b> {result['resolution']} м\n"
-                    f"<b>Размер:</b> {result['size']} пикселей"),
-                parse_mode=ParseMode.HTML)
+        try:
+            photo_msg = await update.message.reply_photo(result["preview"], 
+                    caption=(
+                        f"<b>Адрес:</b> {html.escape(result['address'])}\n\n"
+                        f"<b>Охват:</b> {result['coords']}\n\n"
+                        f"<b>Id снимка:</b> {result['metadata']['id']}\n"
+                        f"<b>Дата снимка:</b> {result['metadata']['datetime']}\n"
+                        f"<b>Облачность:</b> {result['metadata']['cloud_cover']}%\n\n"
+                        f"<b>Разрешение:</b> {result['resolution']} м\n"
+                        f"<b>Размер:</b> {result['size']} пикселей"),
+                    parse_mode=ParseMode.HTML)
 
-        len_tiff = len(result["tiff"]) / (1024 * 1024)
-        if len_tiff > 50:
-            await photo_msg.reply_text(f"Документ слишком большой, размер: {len_tiff} МБ\n"
-                                       f"Уменьшите радиус!")
-        else:
-            await photo_msg.reply_document(result["tiff"],
-                                        filename=f"{result['metadata']['id']}.tiff",
-                                        do_quote=True)
+            len_tiff = len(result["tiff"]) / (1024 * 1024)
+            if len_tiff > 50:
+                await photo_msg.reply_text(f"Документ слишком большой, размер: {len_tiff:.1f} МБ\n"
+                                        f"Уменьшите радиус или полигон!")
+            else:
+                await photo_msg.reply_document(result["tiff"],
+                                            filename=f"{result['metadata']['id']}.tiff",
+                                            do_quote=True)
+        except Exception as e:
+            logger.exception(f"Ошибка отправки файла/фото {str(e)}")
+            await update.message.reply_text("Возникла непредвиденная ошибка при отправке файла!")
 
         await send_img_msg.delete()
     else:

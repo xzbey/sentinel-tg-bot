@@ -12,7 +12,9 @@ from datetime import datetime
 def search(location: str = None, 
            geometry: tuple[float, float] | Geometry | None = None,
            delta: float = 0.1, 
-           time_interval: tuple[str, str] = ("2023-01-01", datetime.now().strftime("%Y-%m-%d"))):
+           time_interval: tuple[str, str] = (None, None)):
+    if time_interval == (None, None):
+        time_interval = ("2023-01-01", datetime.now().strftime("%Y-%m-%d"))
     
     if location is not None:
         place = loc_to_coords(location, delta)

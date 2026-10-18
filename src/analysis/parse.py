@@ -32,13 +32,13 @@ def parse_file(data: bytearray):
     match geom:
         case Point() as point:
             return {
-                "state": 0,
+                "state": "point",
                 "geometry": (point.x, point.y)
             }
 
         case Polygon() | MultiPolygon():
             return {
-                "state": 1,
+                "state": "polygon",
                 "geometry": Geometry(geom, crs=CRS.WGS84)
             }
 

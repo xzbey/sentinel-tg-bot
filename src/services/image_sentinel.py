@@ -2,7 +2,7 @@ from io import BytesIO
 
 import numpy as np
 from shapely import Geometry
-import tifffile
+from rasterio.io import MemoryFile
 
 from core.config import sentinel_config
 from sentinelhub import SentinelHubRequest, DataCollection, MimeType, bbox_to_dimensions
@@ -23,7 +23,7 @@ def get_sentinel_image(datetime: str, geometry: Geometry):
     if not b:
         raise SearchError("Слишком большой размер изображения")
     
-    evalscript = get_evalscript(["B04", "B03", "B02"])
+    evalscript = get_evalscript(["B04", "B03", "B02", "dataMask"])
 
     request = SentinelHubRequest(
         evalscript=evalscript,
@@ -46,8 +46,9 @@ def get_sentinel_image(datetime: str, geometry: Geometry):
 
     tiff_bytes = response.content
 
-    arr = tifffile.imread(BytesIO(tiff_bytes))
-    preview = (np.clip(arr * 3.0, 0, 1) * 255).astype(np.uint8)
+    with MemoryFile(tiff_bytes) as memfile, memfile.open() as src:
+        arr = np.moveaxis(src.read(), 0, -1)
+    preview = (np.clip(arr[:, :, :3] * 3.0, 0, 1) * 255).astype(np.uint8)
     img = Image.fromarray(preview)
     img.thumbnail((1280, 1280))
 

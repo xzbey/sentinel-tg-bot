@@ -21,8 +21,8 @@ conv_handler = ConversationHandler(
     entry_points=[MessageHandler(filters.TEXT & ~filters.COMMAND, ask_radius),
                   MessageHandler(filters.Document.ALL, get_file_data)],
     states={
-        RADIUS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius)],
-        DATE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date)],
+        RADIUS: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_radius), MessageHandler(filters.Document.ALL, get_file_data)],
+        DATE:   [MessageHandler(filters.TEXT & ~filters.COMMAND, get_date), MessageHandler(filters.Document.ALL, get_file_data)],
     },
     fallbacks=[
         CommandHandler("start", start),
