@@ -8,8 +8,10 @@ import logging
 import asyncio
 
 from analysis.parse import parse_file
+from analysis.export import make_preview, make_geotiff
 from pipeline.pipeline import search
 from core.error import SearchError, ParseError
+from core.config import basicBands
 
 from datetime import datetime, date
 
@@ -157,11 +159,12 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error_text = None
 
     try:
-        result = await asyncio.to_thread(search, 
-                                         location = location, 
-                                         geometry = geometry,
-                                         delta = radius, 
-                                         time_interval = date)
+        scene = await asyncio.to_thread(search, 
+                                        location = location, 
+                                        geometry = geometry,
+                                        delta = radius, 
+                                        time_interval = date)
+        context.user_data["scene"] = scene
     except SearchError as e:
         error_text = str(e)
     except Exception as e:
@@ -175,25 +178,34 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         send_img_msg = await update.message.reply_text(text="Отправляю снимок...", reply_markup=ReplyKeyboardRemove())
 
         try:
-            photo_msg = await update.message.reply_photo(result["preview"], 
+            preview = await asyncio.to_thread(make_preview, scene)
+            geotiff = await asyncio.to_thread(make_geotiff, scene, basicBands)
+        except Exception as e:
+            logger.exception(f"Ошибка создания изображения/geotiff {str(e)}")
+            await update.message.reply_text("Возникла непредвиденная ошибка при создании изображения!")
+            await send_img_msg.delete()
+            return END
+        
+        try:
+            photo_msg = await update.message.reply_photo(preview, 
                     caption=(
-                        f"<b>Адрес:</b> {html.escape(result['address'])}\n\n"
-                        f"<b>Охват:</b> {result['coords']}\n\n"
-                        f"<b>Id снимка:</b> {result['metadata']['id']}\n"
-                        f"<b>Дата снимка:</b> {result['metadata']['datetime']}\n"
-                        f"<b>Облачность:</b> {result['metadata']['cloud_cover']}% по SCL: 8, 9, 10\n\n"
-                        f"<b>Разрешение:</b> {result['resolution']} м\n"
-                        f"<b>Размер:</b> {result['size']} пикселей"),
+                        f"<b>Адрес:</b> {html.escape(scene.address)}\n\n"
+                        f"<b>Охват:</b> {scene.coords}\n\n"
+                        f"<b>Id снимка:</b> {scene.metadata['id']}\n"
+                        f"<b>Дата снимка:</b> {scene.date}\n"
+                        f"<b>Облачность:</b> {scene.metadata['cloud_cover']}% по SCL: 8, 9, 10\n\n"
+                        f"<b>Разрешение:</b> {scene.resolution} м\n"
+                        f"<b>Размер:</b> {scene.size} пикселей"),
                     parse_mode=ParseMode.HTML)
 
-            len_tiff = len(result["tiff"]) / (1024 * 1024)
+            len_tiff = len(geotiff) / (1024 * 1024)
             if len_tiff > 50:
                 await photo_msg.reply_text(f"Документ слишком большой, размер: {len_tiff:.1f} МБ\n"
                                         f"Уменьшите радиус или полигон!")
             else:
-                await photo_msg.reply_document(result["tiff"],
-                                            filename=f"{result['metadata']['id']}.tiff",
-                                            do_quote=True)
+                await photo_msg.reply_document(geotiff,
+                                               filename=f"{scene.metadata['id']}.tiff",
+                                               do_quote=True)
         except Exception as e:
             logger.exception(f"Ошибка отправки файла/фото {str(e)}")
             await update.message.reply_text("Возникла непредвиденная ошибка при отправке файла!")

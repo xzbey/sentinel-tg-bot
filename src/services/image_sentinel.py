@@ -9,7 +9,8 @@ from sentinelhub import SentinelHubRequest, DataCollection, MimeType, bbox_to_di
 from sentinelhub.exceptions import DownloadFailedException
 from PIL import Image
 
-from core.error import SearchError, sentinelhub_error
+from core.error import SearchError, ParseError, sentinelhub_error
+from core.scene import Scene
 from services.evalscripts import get_evalscript
 
 
@@ -56,13 +57,9 @@ def scl_mask(datetime: str, geometry: Geometry, size: tuple[int, int]):
     return (scl, data_mask)
 
 
-def get_sentinel_image(datetime: str, geometry: Geometry):
-    size, resolution = bbox_size(geometry)
-    
-    evalscript = get_evalscript(["B04", "B03", "B02", "dataMask"])
-
+def fetch_bands(datetime: str, geometry: Geometry, size: tuple[int, int], band_names: list[str]):    
     request = SentinelHubRequest(
-        evalscript=evalscript,
+        evalscript=get_evalscript(bands=band_names),
         input_data=[
             SentinelHubRequest.input_data(
                 data_collection=DataCollection.SENTINEL2_L2A.define_from("s2l2a_cdse", service_url=sentinel_config().sh_base_url),
@@ -80,19 +77,27 @@ def get_sentinel_image(datetime: str, geometry: Geometry):
     except DownloadFailedException as e:
         raise sentinelhub_error(e)
 
-    tiff_bytes = response.content
+    with MemoryFile(response.content) as memfile, memfile.open() as src:
+        arr = src.read()
+        if src.count != len(band_names):
+            raise ParseError("Количество запрошенных каналов не совпадает с количеством полученных")
+        
+        return {"bands" : {band_names[i] : arr[i] for i in range(len(band_names))}, 
+                "crs" : src.crs, 
+                "transform" : src.transform}
 
-    with MemoryFile(tiff_bytes) as memfile, memfile.open() as src:
-        arr = np.moveaxis(src.read(), 0, -1)
-    preview = (np.clip(arr[:, :, :3] * 3.0, 0, 1) * 255).astype(np.uint8)
-    img = Image.fromarray(preview)
-    img.thumbnail((1280, 1280))
+def fetch_scene(datetime: str, geometry: Geometry, metadata: dict, address: str, coords: tuple, band_names: list[str]) -> Scene:
+    size, resolution = bbox_size(geometry)
 
-    preview_buf = BytesIO()
-    img.save(preview_buf, format="JPEG", quality=85)
-    preview_buf.seek(0)
+    fetched = fetch_bands(datetime, geometry, size, band_names)
 
-    return {"tiff": tiff_bytes,
-            "preview": preview_buf, 
-            "resolution": resolution, 
-            "size": size}
+    return Scene(bands=fetched["bands"], 
+                 geometry=geometry,
+                 size=size,
+                 resolution=resolution,
+                 date=datetime,
+                 crs=fetched["crs"],
+                 transform=fetched["transform"],
+                 metadata=metadata,
+                 address=address,
+                 coords=coords)

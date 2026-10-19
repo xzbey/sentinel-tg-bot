@@ -8,6 +8,10 @@ from tg.handlers import ask_radius, get_radius, get_date, get_file_data, RADIUS,
 
 from core.config import token
 
+# import logging
+# logging.basicConfig(level=logging.INFO)
+# logging.getLogger("httpx").setLevel(logging.WARNING)
+
 application = (
     ApplicationBuilder()
     .token(token())

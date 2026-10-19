@@ -1,15 +1,21 @@
 from shapely import box
 
 from services.geocoder import coords_to_bbox, loc_to_coords
-from services.image_sentinel import bbox_size, get_sentinel_image, scl_mask
+from services.image_sentinel import bbox_size, scl_mask, fetch_scene
 from services.search_sentinel import search_sentinel
 
 from analysis.cloud_cover import cloud_percent
 
 from core.error import SearchError
+from core.config import basicBands
 
 from sentinelhub import Geometry, CRS
 from datetime import datetime
+
+import logging
+import time
+
+logger = logging.getLogger(__name__)
 
 def search(location: str = None, 
            geometry: tuple[float, float] | Geometry | None = None,
@@ -37,13 +43,18 @@ def search(location: str = None,
 
     else:
         raise SearchError("Не задана локация для поиска")
-        
+
+    # t = time.perf_counter()
     metadata_list = search_sentinel(sh_geometry, time_interval)
+    # logger.info("каталог: %.1f с", time.perf_counter() - t)
 
     size = bbox_size(sh_geometry, resolutions=[60])[0]
     candidates = []
     for metadata in metadata_list:
+        # t = time.perf_counter()
         percent = cloud_percent(*scl_mask(datetime=metadata["datetime"], geometry=sh_geometry, size=size))
+        # logger.info("SCL %s: %.1f с", metadata["datetime"], time.perf_counter() - t)
+
         if percent is not None:
             candidates.append((percent, metadata))
 
@@ -53,14 +64,13 @@ def search(location: str = None,
     percent, metadata = min(candidates, key=lambda x: x[0])
     metadata["cloud_cover"] = round(percent, 2)
 
-    image_data = get_sentinel_image(metadata["datetime"], sh_geometry)
+    # t = time.perf_counter()
+    scene = fetch_scene(datetime=metadata["datetime"],
+                        geometry=sh_geometry,
+                        metadata=metadata,
+                        address=address,
+                        coords=coords,
+                        band_names=basicBands)
+    # logger.info("итоговый запрос каналов: %.1f с", time.perf_counter() - t)
 
-    return {
-        "address": address, 
-        "coords": coords, 
-        "metadata": metadata, 
-        "tiff": image_data["tiff"],
-        "preview": image_data["preview"],
-        "resolution": image_data["resolution"],
-        "size": image_data["size"]
-        }
+    return scene

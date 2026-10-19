@@ -16,3 +16,5 @@ def sentinel_config():
 @lru_cache
 def token():
     return getenv("BOT_TOKEN")
+
+basicBands = ["B04", "B03", "B02", "dataMask"]
