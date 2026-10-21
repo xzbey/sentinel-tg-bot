@@ -4,6 +4,8 @@ class SearchError(Exception):
 class ParseError(Exception):
     ...
 
+class IndicesError(Exception):
+    ...
 
 def sentinelhub_error(e: Exception) -> SearchError:
     err = str(e)

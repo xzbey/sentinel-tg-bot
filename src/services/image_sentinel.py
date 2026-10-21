@@ -1,13 +1,9 @@
-from io import BytesIO
-
-import numpy as np
 from shapely import Geometry
 from rasterio.io import MemoryFile
 
 from core.config import sentinel_config
 from sentinelhub import SentinelHubRequest, DataCollection, MimeType, bbox_to_dimensions
 from sentinelhub.exceptions import DownloadFailedException
-from PIL import Image
 
 from core.error import SearchError, ParseError, sentinelhub_error
 from core.scene import Scene
@@ -101,3 +97,16 @@ def fetch_scene(datetime: str, geometry: Geometry, metadata: dict, address: str,
                  metadata=metadata,
                  address=address,
                  coords=coords)
+
+def fix_bands(scene: Scene, band_names: list[str]):
+    bands = scene.missing(band_names)
+    if not bands:
+        return
+
+    fetched = fetch_bands(scene.date, scene.geometry, scene.size, bands)
+    if fetched["crs"] == scene.crs and fetched["transform"] == scene.transform:
+        for band, array in fetched["bands"].items():
+            scene.add(band, array)
+    else:
+        raise ParseError("CRS/Transform на найденный снимок для дополнительных каналов не совпадают")
+
