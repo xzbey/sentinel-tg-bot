@@ -98,7 +98,7 @@ def fetch_scene(datetime: str, geometry: Geometry, metadata: dict, address: str,
                  address=address,
                  coords=coords)
 
-def fix_bands(scene: Scene, band_names: list[str]):
+def fetch_missing_bands(scene: Scene, band_names: list[str]):
     bands = scene.missing(band_names)
     if not bands:
         return

@@ -1,30 +1,22 @@
-from fileinput import filename
-
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from telegram.ext import ContextTypes, ConversationHandler
+from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
 
 import html
-import logging
 import asyncio
 
 from analysis.parse import parse_file
 from analysis.export import make_preview, make_geotiff
-from analysis.render import make_index_geotiff, make_index_preview
 from pipeline.pipeline import search
-from core.error import SearchError, ParseError, IndicesError
+from core.error import SearchError, ParseError
 from core.config import basicBands
-from analysis.indices import compute_index, indices
+from analysis.indices import indices
+from analysis.composites import composites_names
+from tg.tg_constants import logger, RADIUS, DATE, END
+
 
 from datetime import datetime, date
-
-from services.image_sentinel import fix_bands
-
-logger = logging.getLogger(__name__)
-
-RADIUS, DATE = range(2)
-END = ConversationHandler.END
 
 async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE, repeat: bool = False):
     if not repeat:
@@ -181,7 +173,7 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await searching_msg.delete()
 
     if error_text is None:
-        send_img_msg = await update.message.reply_text(text="Отправляю снимок...", reply_markup=ReplyKeyboardRemove())
+        send_img_msg = await update.message.reply_text(text="Отправка изображения...", reply_markup=ReplyKeyboardRemove())
 
         try:
             preview = await asyncio.to_thread(make_preview, scene)
@@ -193,7 +185,9 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return END
         
         try:
-            keyboard = [[InlineKeyboardButton(name, callback_data=f"i:{name}") for name in indices]]
+            keyboard = [[InlineKeyboardButton(name, callback_data=f"i:{name}") for name in indices],
+                        [InlineKeyboardButton(name, callback_data=f"composite:{name}") for name in composites_names] 
+                        + [InlineKeyboardButton("Свой вариант", callback_data=f"custom:composite")]]
             photo_msg = await update.message.reply_photo(preview, 
                     caption=(
                         f"<b>Адрес:</b> {html.escape(scene.address)}\n\n"
@@ -212,7 +206,7 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await photo_msg.reply_text(f"Документ слишком большой, размер: {len_tiff:.1f} МБ\n"
                                         f"Уменьшите радиус или полигон!")
             else:
-                send_doc_msg = await update.message.reply_text("Отправка geotiff, подождите...")
+                send_doc_msg = await update.message.reply_text("Отправка geotiff...")
                 await photo_msg.reply_document(geotiff,
                                                filename=f"{scene.metadata['id']}.tiff",
                                                do_quote=True,
@@ -229,54 +223,3 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text("Введите локацию для поиска:")
     return END
-
-
-async def index_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-
-    name = query.data.split(":")[1]
-    scene = context.user_data.get("scene")
-    if scene is None:
-        await query.message.reply_text("Сессия потеряна, сделайте новый поиск")
-        return
-
-    try:
-        async with scene.lock:
-            await asyncio.to_thread(fix_bands, scene, indices[name])
-        array = await asyncio.to_thread(compute_index, scene, name)
-
-        preview = await asyncio.to_thread(make_index_preview, array, name)
-        geotiff = await asyncio.to_thread(make_index_geotiff, array, scene.crs, scene.transform)
-
-    except (IndicesError, SearchError, ParseError) as e:
-        await query.message.reply_text(str(e))
-        return
-    except Exception as e:
-        logger.exception(f"Ошибка расчета индекса {str(e)}")
-        await query.message.reply_text("Что-то пошло не так, попробуйте позже")
-        return
-
-    try:
-        photo_text = await query.message.reply_text("Отправка снимка...")
-        photo_msg = await query.message.reply_photo(preview, 
-                                                    caption=
-                                                        f"<b>Индекс</b>: {name}\n\n"
-                                                        f"<b>Охват:</b> {scene.coords}\n\n"
-                                                        f"<b>Id снимка:</b> {scene.metadata['id']}\n"
-                                                        f"<b>Дата снимка:</b> {scene.date}\n"
-                                                        f"<b>Размер:</b> {scene.size} пикселей",
-                                                    parse_mode=ParseMode.HTML,
-                                                    do_quote=True)
-        await photo_text.delete()
-
-        gtiff_text = await query.message.reply_text("Отправка geotiff...")
-        await photo_msg.reply_document(geotiff, 
-                                       filename=f"{name}_{scene.metadata['id']}.tif",
-                                       do_quote=True,
-                                       write_timeout=120)
-        await gtiff_text.delete()
-
-    except Exception as e:
-        logger.exception(f"Ошибка отправки файла или фото {str(e)}")
-        await query.message.reply_text("Ошибка отправки данных индекса, попробуйте еще раз или позже")

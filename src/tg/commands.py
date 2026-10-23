@@ -2,7 +2,8 @@ from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 
-from tg.handlers import ask_radius, ask_date, RADIUS, DATE, END
+from tg.main_handlers import ask_radius, ask_date
+from tg.tg_constants import RADIUS, DATE, END
 from tg.texts import START_TEXT, GUIDE_TEXT
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):

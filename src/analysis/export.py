@@ -6,8 +6,8 @@ from io import BytesIO
 from rasterio.io import MemoryFile
 
 
-def make_preview(scene: Scene) -> BytesIO:
-    preview = (clip(scene.stack(["B04", "B03", "B02"]) * 3.0, 0, 1) * 255).astype(uint8)
+def make_preview(scene: Scene, bands: list[str] = ["B04", "B03", "B02"]) -> BytesIO:
+    preview = (clip(scene.stack(bands) * 3.0, 0, 1) * 255).astype(uint8)
     img = fromarray(preview)
     img.thumbnail((1280, 1280))
 

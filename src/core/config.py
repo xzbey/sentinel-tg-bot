@@ -18,3 +18,6 @@ def token():
     return getenv("BOT_TOKEN")
 
 basicBands = ["B04", "B03", "B02", "dataMask"]
+
+allowableBands = ["B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B8A", "B09", "B11", "B12"]
+MAX_CUSTOM_BANDS = 6
