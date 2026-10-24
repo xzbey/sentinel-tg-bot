@@ -34,4 +34,5 @@ def make_geotiff(scene: Scene, band_names: list[str]):
         with memfile.open(**meta) as dataset:
             for i, name in enumerate(band_names):
                 dataset.write(scene.bands[name], i + 1)
+                dataset.set_band_description(i + 1, name)
         return memfile.read()

@@ -26,7 +26,7 @@ async def indices_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         array = await asyncio.to_thread(compute_index, scene, name)
 
         preview = await asyncio.to_thread(make_index_preview, array, name)
-        geotiff = await asyncio.to_thread(make_index_geotiff, array, scene.crs, scene.transform)
+        geotiff = await asyncio.to_thread(make_index_geotiff, array, scene.crs, scene.transform, name)
 
     except (IndicesError, SearchError, ParseError) as e:
         await query.message.reply_text(str(e))

@@ -27,7 +27,7 @@ def make_index_preview(array: ndarray, title: str) -> BytesIO:
 
     return buf
 
-def make_index_geotiff(array: ndarray, crs: CRS, transform: Affine):
+def make_index_geotiff(array: ndarray, crs: CRS, transform: Affine, name: str):
     h, w = array.shape
     meta = {
         "driver": "GTiff",
@@ -44,4 +44,5 @@ def make_index_geotiff(array: ndarray, crs: CRS, transform: Affine):
     with MemoryFile() as memfile:
         with memfile.open(**meta) as dataset:
             dataset.write(array, 1)
+            dataset.set_band_description(1, name)
         return memfile.read()
