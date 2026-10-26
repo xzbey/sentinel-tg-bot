@@ -8,6 +8,7 @@ from tg.tg_constants import DATE, RADIUS, COMPOSITE
 from tg.main_handlers import ask_radius, get_radius, get_date, get_file_data
 from tg.composites_handlers import ask_composite, get_composite, composite_btn
 from tg.indices_handlers import indices_btn
+from tg.classification_handlers import classification_btn
 
 from core.config import token
 
@@ -43,6 +44,7 @@ application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("guide", guide))
 application.add_handler(CallbackQueryHandler(indices_btn, pattern="i:"))
 application.add_handler(CallbackQueryHandler(composite_btn, pattern="composite:"))
+application.add_handler(CallbackQueryHandler(classification_btn, pattern="classification"))
 application.add_handler(conv_handler)
 
 application.run_polling()

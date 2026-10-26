@@ -6,7 +6,7 @@ from rasterio.crs import CRS
 from affine import Affine
 from rasterio.io import MemoryFile
 
-def make_index_preview(array: ndarray, title: str) -> BytesIO:
+def make_index_preview(array: ndarray, title: str, vmin: float = -1, vmax: float = 1) -> BytesIO:
     h, w = array.shape
     scale = 1200 / max(h, w)
     fig = Figure(figsize=(w * scale / 100, h * scale / 100), dpi=100)
@@ -18,21 +18,22 @@ def make_index_preview(array: ndarray, title: str) -> BytesIO:
     ax.axis('off')
     ax.set_title(title)
 
-    im = ax.imshow(array, cmap=cmap, vmin=-1, vmax=1, aspect="equal", interpolation="nearest")
+    im = ax.imshow(array, cmap=cmap, vmin=vmin, vmax=vmax, aspect="equal", interpolation="nearest")
     fig.colorbar(im, ax=ax)
 
     buf = BytesIO()
-    fig.savefig(buf, format="JPEG")
+    fig.savefig(buf, format="JPEG", bbox_inches="tight")
     buf.seek(0)
 
     return buf
 
-def make_index_geotiff(array: ndarray, crs: CRS, transform: Affine, name: str):
+def make_index_geotiff(array: ndarray, crs: CRS, transform: Affine, name: str, 
+                       dtype: str = "float32", nodata = None):
     h, w = array.shape
     meta = {
         "driver": "GTiff",
-        "dtype": "float32",
-        "nodata": None,
+        "dtype": dtype,
+        "nodata": nodata,
         "width": w,
         "height": h,
         "count": 1,

@@ -9,6 +9,8 @@ from core.error import SearchError, ParseError, IndicesError
 from analysis.indices import compute_index, indices
 from tg.tg_constants import logger
 from services.image_sentinel import fetch_missing_bands
+from tg.ui import send_action_menu
+
 
 async def indices_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -45,8 +47,7 @@ async def indices_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                         f"<b>Id снимка:</b> {scene.metadata['id']}\n"
                                                         f"<b>Дата снимка:</b> {scene.date}\n"
                                                         f"<b>Размер:</b> {scene.size} пикселей",
-                                                    parse_mode=ParseMode.HTML,
-                                                    do_quote=True)
+                                                    parse_mode=ParseMode.HTML)
         await photo_text.delete()
 
         gtiff_text = await query.message.reply_text("Отправка geotiff...")
@@ -55,6 +56,7 @@ async def indices_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                        do_quote=True,
                                        write_timeout=120)
         await gtiff_text.delete()
+        await send_action_menu(update, context)
 
     except Exception as e:
         logger.exception(f"Ошибка отправки файла или фото {str(e)}")

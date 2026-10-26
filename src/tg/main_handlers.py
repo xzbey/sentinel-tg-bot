@@ -1,4 +1,4 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 from telegram.error import TelegramError
@@ -11,15 +11,16 @@ from analysis.export import make_preview, make_geotiff
 from pipeline.pipeline import search
 from core.error import SearchError, ParseError
 from core.config import basicBands
-from analysis.indices import indices
-from analysis.composites import composites_names
 from tg.tg_constants import logger, RADIUS, DATE, END
-
+from tg.ui import send_action_menu
 
 from datetime import datetime, date
 
 async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE, repeat: bool = False):
     if not repeat:
+        menu_msg = context.user_data.get("menu_msg")
+        if menu_msg is not None:
+            await menu_msg.delete()
         context.user_data.clear()
         context.user_data['location'] = update.message.text
         context.user_data['state'] = RADIUS
@@ -63,11 +64,13 @@ async def get_file_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return END
     except ParseError as e:
         await update.message.reply_text(str(e))
+        await send_action_menu(update, context)
         return END
     except Exception as e:
         error_text = f"Неожиданная ошибка при поиске снимка: {str(e)}"
         logger.exception(error_text)
         await update.message.reply_text(error_text)
+        await send_action_menu(update, context)
         return END
 
 
@@ -77,7 +80,7 @@ async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == "❌ Отмена":
         context.user_data['state'] = END
         await update.message.reply_text("Отменено.", reply_markup=ReplyKeyboardRemove())
-        await update.message.reply_text("Введите локацию для поиска:")
+        await send_action_menu(update, context)
         return END
     
     elif text == "📍 5 км - по умолчанию":
@@ -114,7 +117,7 @@ async def get_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if text == "❌ Отмена":
         context.user_data['state'] = END
         await update.message.reply_text("Отменено.", reply_markup=ReplyKeyboardRemove())
-        await update.message.reply_text("Введите локацию для поиска:")
+        await send_action_menu(update, context)
         return END
     
     elif text == "📅 2023-01-01 - сегодня":
@@ -185,9 +188,6 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return END
         
         try:
-            keyboard = [[InlineKeyboardButton(name, callback_data=f"i:{name}") for name in indices],
-                        [InlineKeyboardButton(name, callback_data=f"composite:{name}") for name in composites_names] 
-                        + [InlineKeyboardButton("Свой вариант", callback_data=f"custom:composite")]]
             photo_msg = await update.message.reply_photo(preview, 
                     caption=(
                         f"<b>Адрес:</b> {html.escape(scene.address)}\n\n"
@@ -197,8 +197,7 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         f"<b>Облачность:</b> {scene.metadata['cloud_cover']}% по SCL: 8, 9, 10\n\n"
                         f"<b>Разрешение:</b> {scene.resolution} м\n"
                         f"<b>Размер:</b> {scene.size} пикселей"),
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=InlineKeyboardMarkup(keyboard))
+                    parse_mode=ParseMode.HTML)
             await send_img_msg.delete()
 
             len_tiff = len(geotiff) / (1024 * 1024)
@@ -221,5 +220,5 @@ async def do_search(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"🛑 <b>Ошибка:</b> <i>{html.escape(error_text)}</i>",
             parse_mode=ParseMode.HTML)
     
-    await update.message.reply_text("Введите локацию для поиска:")
+    await send_action_menu(update, context)
     return END

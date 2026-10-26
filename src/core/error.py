@@ -7,6 +7,9 @@ class ParseError(Exception):
 class IndicesError(Exception):
     ...
 
+class ClassificationError(Exception):
+    ...
+
 def sentinelhub_error(e: Exception) -> SearchError:
     err = str(e)
     

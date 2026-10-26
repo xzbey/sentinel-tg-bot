@@ -15,6 +15,8 @@ composites_names = {
 def make_composite_preview(scene: Scene, bands: list[str]) -> BytesIO:
     match len(bands):
         case 1:
+            if bands[0] == "SCL":
+                return make_index_preview(scene.bands[bands[0]], title=bands[0], vmin=0, vmax=11)
             return make_index_preview(scene.bands[bands[0]], title=bands[0])
         case 2:
             bands_in_2 = [*bands, bands[-1]]

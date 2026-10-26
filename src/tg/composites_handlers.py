@@ -11,6 +11,7 @@ from analysis.composites import composites_names, make_composite_preview, parse_
 from core.scene import Scene
 from tg.tg_constants import logger, COMPOSITE, END
 from services.image_sentinel import fetch_missing_bands
+from tg.ui import send_action_menu
 
 
 async def send_composite(message, scene: Scene, title: str, bands: list[str]):
@@ -82,6 +83,7 @@ async def composite_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await send_composite(query.message, scene, name, composites_names[name])
+    await send_action_menu(update, context)
 
 
 async def ask_composite(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -122,10 +124,11 @@ async def get_composite(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return COMPOSITE
 
     
-    await update.message.reply_text("Строю композит...", reply_markup=ReplyKeyboardRemove())
+    composite_msg = await update.message.reply_text("Строю композит...", reply_markup=ReplyKeyboardRemove())
     await send_composite(update.message, scene, "Свой набор", bands)
-
+    await composite_msg.delete()
     context.user_data['state'] = END
+    await send_action_menu(update, context)
     return END
 
         
