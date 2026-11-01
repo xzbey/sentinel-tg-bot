@@ -37,7 +37,7 @@ def class_keyboard() -> InlineKeyboardMarkup:
 def format_steps(delta) -> str:
     parts = []
     for key, name in NAMES.items():
-        steps = int(delta[key] * COUNT_STEPS[key] / STEP[key])
+        steps = round(delta[key] * COUNT_STEPS[key] / STEP[key])
         if steps:
             parts.append(f"{name}: {steps:+d}")
     return ", ".join(parts) if parts else "по умолчанию"
@@ -126,6 +126,7 @@ async def classification_btn(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def classification_set_btn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    await query.answer()
 
     scene = context.user_data.get("scene")
     delta = context.user_data.get("class_delta")
@@ -136,7 +137,7 @@ async def classification_set_btn(update: Update, context: ContextTypes.DEFAULT_T
     _, key, action = query.data.split(":")
 
     new_delta = delta.copy()
-    new_delta[key] = delta[key] + COUNT_STEPS[key] * (1 if action == "more" else -1) * STEP[key]
+    new_delta[key] = round(delta[key] + COUNT_STEPS[key] * (1 if action == "more" else -1) * STEP[key], 4)
 
     try:
         array = await asyncio.to_thread(compute_classification, scene, new_delta)
@@ -149,7 +150,6 @@ async def classification_set_btn(update: Update, context: ContextTypes.DEFAULT_T
         return
 
     context.user_data["class_delta"] = new_delta
-    await query.answer()
 
     try:
         await query.edit_message_reply_markup(reply_markup=None)

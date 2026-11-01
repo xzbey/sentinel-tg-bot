@@ -88,8 +88,9 @@ async def get_radius(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     else:
         try:
+            text.replace(",", ".")
             rad = float(text)
-            if rad < 0.1 or rad > 50:
+            if not (0.1 <= rad <= 50):
                 return await ask_radius(update, context, repeat=True)
             context.user_data["radius"] = rad / 100
 

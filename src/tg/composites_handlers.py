@@ -20,8 +20,7 @@ async def send_composite(message, scene: Scene, title: str, bands: list[str]):
             await asyncio.to_thread(fetch_missing_bands, scene, bands)
 
         preview = await asyncio.to_thread(make_composite_preview, scene, bands)
-        bands.append("dataMask")
-        geotiff = await asyncio.to_thread(make_geotiff, scene, bands)
+        geotiff = await asyncio.to_thread(make_geotiff, scene, [*bands, "dataMask"])
 
     except (IndicesError, SearchError, ParseError) as e:
         await message.reply_text(str(e))
@@ -91,7 +90,7 @@ async def ask_composite(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if context.user_data.get("scene") is None:
-        await update.message.reply_text("Сессия потеряна, сделайте новый поиск", reply_markup=ReplyKeyboardRemove())
+        await query.message.reply_text("Сессия потеряна, сделайте новый поиск", reply_markup=ReplyKeyboardRemove())
         return END
 
     context.user_data['state'] = COMPOSITE

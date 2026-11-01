@@ -12,9 +12,9 @@ DEFAULTS = {"water": 0.1, "built": -0.4, "veg": 0.25}
 
 
 def parse_def(changing_dict: dict) -> dict:
-    result_def = {"water": DEFAULTS["water"] + changing_dict["water"], 
-                  "built": DEFAULTS["built"] + changing_dict["built"], 
-                  "veg": DEFAULTS["veg"] + changing_dict["veg"]}
+    result_def = {"water": round(DEFAULTS["water"] + changing_dict["water"], 3), 
+                  "built": round(DEFAULTS["built"] + changing_dict["built"], 3), 
+                  "veg": round(DEFAULTS["veg"] + changing_dict["veg"], 3)}
     
     if result_def["water"] > LIMIT["water_max"]:
         raise ClassificationError("Максимальный лимит воды достигнут")
