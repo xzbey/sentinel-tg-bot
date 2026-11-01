@@ -3,7 +3,7 @@ load_dotenv()
 
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ConversationHandler, CallbackQueryHandler
 
-from tg.commands import start, guide
+from tg.commands import start, guide, indices_help, composites_help, class_help, vector_help
 from tg.tg_constants import DATE, RADIUS, COMPOSITE
 from tg.main_handlers import ask_radius, get_radius, get_date, get_file_data
 from tg.composites_handlers import ask_composite, get_composite, composite_btn
@@ -43,6 +43,10 @@ conv_handler = ConversationHandler(
 
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("guide", guide))
+application.add_handler(CommandHandler("indices", indices_help))
+application.add_handler(CommandHandler("composites", composites_help))
+application.add_handler(CommandHandler("class", class_help))
+application.add_handler(CommandHandler("vector", vector_help))
 application.add_handler(CallbackQueryHandler(indices_btn, pattern="i:"))
 application.add_handler(CallbackQueryHandler(composite_btn, pattern="composite:"))
 application.add_handler(CallbackQueryHandler(classification_btn, pattern="classification"))

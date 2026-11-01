@@ -1,7 +1,6 @@
 name: tgbot-env
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.12
   - geopy=2.4.1
@@ -11,3 +10,6 @@ dependencies:
   - rasterio=1.5.0
   - shapely=2.1.2
   - geopandas=1.2.0
+  - pyogrio
+  - scipy
+  - matplotlib
