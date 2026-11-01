@@ -10,6 +10,9 @@ class IndicesError(Exception):
 class ClassificationError(Exception):
     ...
 
+class VectorizationError(Exception):
+    ...
+
 def sentinelhub_error(e: Exception) -> SearchError:
     err = str(e)
     

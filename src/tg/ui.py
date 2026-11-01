@@ -1,8 +1,5 @@
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
-from telegram.constants import ParseMode
-
-import asyncio
 
 from analysis.indices import indices
 from analysis.composites import composites_names
@@ -11,7 +8,8 @@ def build_scene_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup([[InlineKeyboardButton(name, callback_data=f"i:{name}") for name in indices],
                                  [InlineKeyboardButton(name, callback_data=f"composite:{name}") for name in composites_names] 
                                      + [InlineKeyboardButton("Свой вариант", callback_data=f"custom:composite")],
-                                 [InlineKeyboardButton("Классификация", callback_data="classification")]])
+                                 [InlineKeyboardButton("Классификация", callback_data="classification")],
+                                 [InlineKeyboardButton("Векторизация", callback_data="vectorization")]])
 
 
 async def send_action_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):

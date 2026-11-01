@@ -5,7 +5,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 from numpy import ndarray
 
-CLASS_NAMES = {1: "Вода", 2: "Застройка", 3: "Растительность", 4: "Прочее"}
+CLASS_NAMES = {1: "Вода", 2: "Застройка / Открытый грунт", 3: "Растительность", 4: "Прочее"}
 CLASS_COLORS = {0: "black",
                 1: "RoyalBlue",
                 2: "DarkRed",

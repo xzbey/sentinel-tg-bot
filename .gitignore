@@ -6,4 +6,5 @@ __pycache__
 *.geojson
 *.qmd
 *.tif
+*.gpkg
 /test_data
