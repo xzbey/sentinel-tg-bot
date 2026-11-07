@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ContextTypes
+from telegram.error import TelegramError
 
 from analysis.indices import indices
 from analysis.composites import composites_names
@@ -11,11 +12,17 @@ def build_scene_keyboard() -> InlineKeyboardMarkup:
                                  [InlineKeyboardButton("Классификация", callback_data="classification")],
                                  [InlineKeyboardButton("Векторизация", callback_data="vectorization")]])
 
+async def safe_delete(msg):
+    try:
+        await msg.delete()
+    except TelegramError:
+        pass
+
 
 async def send_action_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     old_menu = context.user_data.pop("menu_msg", None)
     if old_menu:
-        await old_menu.delete()
+        await safe_delete(old_menu)
 
     chat = update.effective_chat
     if context.user_data.get("scene") is not None:

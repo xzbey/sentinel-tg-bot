@@ -12,7 +12,7 @@ from pipeline.pipeline import search
 from core.error import SearchError, ParseError
 from core.config import basicBands
 from tg.tg_constants import logger, RADIUS, DATE, END
-from tg.ui import send_action_menu
+from tg.ui import send_action_menu, safe_delete
 
 from datetime import datetime, date
 
@@ -20,7 +20,7 @@ async def ask_radius(update: Update, context: ContextTypes.DEFAULT_TYPE, repeat:
     if not repeat:
         menu_msg = context.user_data.get("menu_msg")
         if menu_msg is not None:
-            await menu_msg.delete()
+            await safe_delete(menu_msg)
         context.user_data.clear()
         context.user_data['location'] = update.message.text
         context.user_data['state'] = RADIUS

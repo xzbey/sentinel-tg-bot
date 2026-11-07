@@ -4,7 +4,7 @@ from services.geocoder import coords_to_bbox, loc_to_coords
 from services.image_sentinel import bbox_size, scl_mask, fetch_scene
 from services.search_sentinel import search_sentinel
 
-from analysis.cloud_cover import cloud_percent
+from analysis.cloud_cover import cloud_percent, valid_pixels
 
 from core.error import SearchError
 from core.config import basicBands
@@ -52,16 +52,19 @@ def search(location: str = None,
     candidates = []
     for metadata in metadata_list:
         # t = time.perf_counter()
-        percent = cloud_percent(*scl_mask(datetime=metadata["datetime"], geometry=sh_geometry, size=size))
+        scl, mask = scl_mask(datetime=metadata["datetime"], geometry=sh_geometry, size=size)
+        percent = cloud_percent(scl, mask)
         # logger.info("SCL %s: %.1f с", metadata["datetime"], time.perf_counter() - t)
 
         if percent is not None:
-            candidates.append((percent, metadata))
+            candidates.append((percent, valid_pixels(scl, mask), metadata))
 
     if candidates == []:
         raise SearchError("В зоне нет пикселей с данными ни в одном из снимков")
 
-    percent, metadata = min(candidates, key=lambda x: x[0])
+    max_valid = max(c[1] for c in candidates)
+    full = [(p, m) for p, v, m in candidates if v >= 0.99 * max_valid]
+    percent, metadata = min(full, key=lambda x: x[0])
     metadata["cloud_cover"] = round(percent, 2)
 
     # t = time.perf_counter()

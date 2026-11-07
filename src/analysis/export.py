@@ -1,7 +1,7 @@
 from core.scene import Scene
 
 from numpy import clip, uint8
-from PIL.Image import fromarray
+from PIL.Image import fromarray, Resampling
 from io import BytesIO
 from rasterio.io import MemoryFile
 
@@ -9,7 +9,8 @@ from rasterio.io import MemoryFile
 def make_preview(scene: Scene, bands: list[str] = ["B04", "B03", "B02"]) -> BytesIO:
     preview = (clip(scene.stack(bands) * 3.0, 0, 1) * 255).astype(uint8)
     img = fromarray(preview)
-    img.thumbnail((1280, 1280))
+    scale = 1200 / max(img.size)
+    img = img.resize((round(img.width * scale), round(img.height * scale)), Resampling.LANCZOS)
 
     preview_buf = BytesIO()
     img.save(preview_buf, format="JPEG", quality=85)

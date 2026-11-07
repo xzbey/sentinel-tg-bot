@@ -9,3 +9,7 @@ def cloud_percent(scl, data_mask) -> float | None:
     cloud_pixels = int(count_nonzero(cloud_mask))
 
     return (100 * cloud_pixels / count_valid_pixels) if count_valid_pixels > 0 else None
+
+
+def valid_pixels(scl, data_mask) -> int:
+    return int(count_nonzero((data_mask == 1) & (scl != 0)))
